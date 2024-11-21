@@ -4,4 +4,4 @@ python3.12 -m venv venv
 
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
-pip install -r reqs.text.txt
+pip install -r reqs.txt
