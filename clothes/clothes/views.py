@@ -45,15 +45,6 @@ def product_create(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Create a new feedback
-# @api_view(['POST'])
-# def feedback_create(request):
-#     serializer = FeedbackSerializer(data=request.data)  # Deserialize the data
-#     if serializer.is_valid():
-#         serializer.save()  # Save the new feedback
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 @api_view(['POST'])
 def feedback_create(request):
     serializer = FeedbackSerializer(data=request.data)  # Deserialize the data
@@ -185,6 +176,175 @@ def upload_products_from_txt(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
+# Customer
+
+@api_view(['GET'])
+def customer_detail(request, customer_id):
+    try:
+        customer = Customer.objects.get(id=customer_id)
+        serializer = CustomerSerializer(customer)
+        return Response(serializer.data)
+    except Customer.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PATCH'])
+def customer_update(request, customer_id):
+    try:
+        customer = Customer.objects.get(id=customer_id)
+        serializer = CustomerSerializer(customer, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Customer.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+# Bulk Update
+
+@api_view(['PATCH'])
+def bulk_update_customers(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    update = request.data.get('update')
+    try:
+        result = db_handle['customers'].update_many(filter, {'$set': update})
+        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def customer_delete(request, customer_id):
+    try:
+        customer = Customer.objects.get(id=customer_id)
+        customer.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Customer.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+# Bulk Delete
+@api_view(['DELETE'])
+def bulk_delete_customers(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    try:
+        result = db_handle['customers'].delete_many(filter)
+        return Response({"deleted_count": result.deleted_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Product
+
+@api_view(['GET'])
+def product_detail(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PATCH'])
+def product_update(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+        serializer = ProductSerializer(product, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+# Bulk Update
+@api_view(['PATCH'])
+def bulk_update_products(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    update = request.data.get('update')
+    try:
+        result = db_handle['products'].update_many(filter, {'$set': update})
+        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def product_delete(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+# Bulk Delete
+
+@api_view(['DELETE'])
+def bulk_delete_products(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    try:
+        result = db_handle['products'].delete_many(filter)
+        return Response({"deleted_count": result.deleted_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# Feedback
+
+@api_view(['GET'])
+def feedback_detail(request, feedback_id):
+    try:
+        feedback = Feedback.objects.get(id=feedback_id)
+        serializer = FeedbackSerializer(feedback)
+        return Response(serializer.data)
+    except Feedback.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PATCH'])
+def feedback_update(request, feedback_id):
+    try:
+        feedback = Feedback.objects.get(id=feedback_id)
+        serializer = FeedbackSerializer(feedback, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Feedback.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+# Bulk Update
+@api_view(['PATCH'])
+def bulk_update_feedbacks(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    update = request.data.get('update')
+    try:
+        result = db_handle['feedbacks'].update_many(filter, {'$set': update})
+        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def feedback_delete(request, feedback_id):
+    try:
+        feedback = Feedback.objects.get(id=feedback_id)
+        feedback.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Feedback.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+# Bulk Delete
+@api_view(['PATCH'])
+def bulk_update_feedbacks(request):
+    db_handle, _ = get_db_handle()
+    filter = request.data.get('filter')
+    update = request.data.get('update')
+    try:
+        result = db_handle['feedbacks'].update_many(filter, {'$set': update})
+        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 # Views for calling various Feedbacks to ensure the data is being stored correctly    
 
 @api_view(['GET'])
