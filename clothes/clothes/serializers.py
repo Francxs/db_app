@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Customer, Product, Feedback  # MongoEngine models
+import re
+from rest_framework.exceptions import ValidationError
 
 class CustomerSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
@@ -10,6 +12,11 @@ class CustomerSerializer(serializers.Serializer):
     hips = serializers.CharField(max_length=10, required=False)
     bust = serializers.CharField(max_length=10, required=False)
     height = serializers.CharField(max_length=10, required=False)
+
+    def validate_user_id(self, value):
+        if not re.match(r'^\d{6}$', str(value)):
+            raise ValidationError("User ID must be a 6-digit number")
+        return value
 
     # Create a new Customer in MongoDB using MongoEngine
     def create(self, validated_data):
@@ -29,6 +36,11 @@ class ProductSerializer(serializers.Serializer):
     cloth_size_category = serializers.CharField(max_length=10, required=False)
     last_update_date = serializers.DateField()
 
+    def validate_item_id(self, value):
+        if not re.match(r'^\d{6}$', str(value)):
+            raise ValidationError("Item ID must be a 6-digit number")
+        return value
+
     # Create a new Product in MongoDB using MongoEngine
     def create(self, validated_data):
         return Product(**validated_data).save()
@@ -46,6 +58,21 @@ class FeedbackSerializer(serializers.Serializer):
     review_summary = serializers.CharField(max_length=255, required=False)
     customer_id = serializers.IntegerField()
     product_id = serializers.IntegerField()
+
+    def validate_review_id(self, value):
+        if not re.match(r'^\d{6}$', str(value)):
+            raise ValidationError("Review ID must be a 6-digit number")
+        return value
+
+    def validate_customer_id(self, value):
+        if not Customer.objects(user_id=value).first():
+            raise serializers.ValidationError("Referenced customer does not exist")
+        return value
+
+    def validate_product_id(self, value):
+        if not Product.objects(item_id=value).first():
+            raise serializers.ValidationError("Referenced product does not exist")
+        return value
 
     # Create a new Feedback in MongoDB using MongoEngine
     def create(self, validated_data):

@@ -6,6 +6,7 @@ from .models import Customer, Product, Feedback
 from .utils import get_db_handle
 from django.core.files.uploadedfile import UploadedFile
 import json
+from rest_framework.exceptions import ValidationError
 
 # MongoEngine views for common operations
 @api_view(['GET'])
@@ -45,12 +46,23 @@ def product_create(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Create a new feedback
+# @api_view(['POST'])
+# def feedback_create(request):
+#     serializer = FeedbackSerializer(data=request.data)  # Deserialize the data
+#     if serializer.is_valid():
+#         serializer.save()  # Save the new feedback
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 def feedback_create(request):
     serializer = FeedbackSerializer(data=request.data)  # Deserialize the data
     if serializer.is_valid():
-        serializer.save()  # Save the new feedback
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            serializer.save()  # Save the new feedback
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
