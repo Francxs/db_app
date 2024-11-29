@@ -59,43 +59,67 @@ class FeedbackSerializer(serializers.Serializer):
     customer_id = serializers.IntegerField()
     product_id = serializers.IntegerField()
 
+    customer = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+
     def validate_review_id(self, value):
         if not re.match(r'^\d{6}$', str(value)):
-            raise ValidationError("Review ID must be a 6-digit number")
+            raise serializers.ValidationError("Review ID must be a 6-digit number")
         return value
 
     def validate_customer_id(self, value):
+        if value is None:
+            raise serializers.ValidationError("customer_id cannot be null")
         if not Customer.objects(user_id=value).first():
             raise serializers.ValidationError("Referenced customer does not exist")
         return value
 
     def validate_product_id(self, value):
+        if value is None:
+            raise serializers.ValidationError("product_id cannot be null")
         if not Product.objects(item_id=value).first():
             raise serializers.ValidationError("Referenced product does not exist")
         return value
 
-    # Create a new Feedback in MongoDB using MongoEngine
     def create(self, validated_data):
-        return Feedback(**validated_data).save()
+        # Validate and retrieve related objects
+        try:
+            customer = Customer.objects.get(user_id=validated_data['customer_id'])
+        except Customer.DoesNotExist:
+            raise serializers.ValidationError({"customer_id": "Referenced customer does not exist"})
 
-    # Update an existing Feedback in MongoDB using MongoEngine
+        try:
+            product = Product.objects.get(item_id=validated_data['product_id'])
+        except Product.DoesNotExist:
+            raise serializers.ValidationError({"product_id": "Referenced product does not exist"})
+
+        # Create and save feedback
+        feedback = Feedback(
+            review_id=validated_data['review_id'],
+            fit=validated_data['fit'],
+            length=validated_data.get('length'),
+            review_text=validated_data.get('review_text'),
+            review_summary=validated_data.get('review_summary'),
+            customer=customer,
+            product=product
+        )
+        feedback.save()
+        return feedback
+
     def update(self, instance, validated_data):
         instance.update(**validated_data)
         return instance.reload()
-    
-    customer = serializers.SerializerMethodField()
-    product = serializers.SerializerMethodField()
 
     def get_customer(self, obj):
-        try:
-            customer = Customer.objects.get(user_id=obj.customer_id)
-            return CustomerSerializer(customer).data
-        except:
-            return None
+        """Retrieve the serialized Customer object."""
+        if obj.customer:
+            return CustomerSerializer(obj.customer).data
+        return None
 
     def get_product(self, obj):
-        try:
-            product = Product.objects.get(item_id=obj.product_id)
-            return ProductSerializer(product).data
-        except:
-            return None
+        """Retrieve the serialized Product object."""
+        if obj.product:
+            return ProductSerializer(obj.product).data
+        return None
+
+

@@ -49,15 +49,11 @@ class Feedback(Document):
     customer = ReferenceField(Customer, required=True, reverse_delete_rule=CASCADE)
     product = ReferenceField(Product, required=True, reverse_delete_rule=CASCADE)
 
-    def clean(self):
-        if not Customer.objects(user_id=self.customer_id).first():
-            raise ValidationError("Referenced customer does not exist")
-        if not Product.objects(item_id=self.product_id).first():
-            raise ValidationError("Referenced product does not exist")
-    
     # def clean(self):
-    #     try:
-    #         Customer.objects.get(user_id=self.customer_id)
-    #         Product.objects.get(item_id=self.product_id)
-    #     except:
-    #         raise ValidationError("Referenced customer or product does not exist")
+    #     if not Customer.objects(user_id=self.customer_id).first():
+    #         raise ValidationError("Referenced customer does not exist")
+    #     if not Product.objects(item_id=self.product_id).first():
+    #         raise ValidationError("Referenced product does not exist")
+    
+    def clean(self):
+        pass  # Bypass model validation to avoid duplication with serializers
