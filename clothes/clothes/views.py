@@ -333,14 +333,13 @@ def feedback_delete(request, feedback_id):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 # Bulk Delete
-@api_view(['PATCH'])
-def bulk_update_feedbacks(request):
+@api_view(['DELETE'])
+def bulk_delete_feedbacks(request):
     db_handle, _ = get_db_handle()
     filter = request.data.get('filter')
-    update = request.data.get('update')
     try:
-        result = db_handle['feedbacks'].update_many(filter, {'$set': update})
-        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
+        result = db_handle['feedbacks'].delete_many(filter)
+        return Response({"deleted_count": result.deleted_count})
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

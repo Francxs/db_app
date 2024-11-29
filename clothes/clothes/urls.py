@@ -45,13 +45,13 @@ urlpatterns = [
 
     # Read (GET)
     path('customers/<str:customer_id>/', views.customer_detail, name='customer_detail'),
-    path('customers/', views.customers_list, name='customers_list'),
+    # path('customers/', views.customers_list, name='customers_list'),
 
     path('products/<str:product_id>/', views.product_detail, name='product_detail'),
-    path('products/', views.products_list, name='products_list'),
+    # path('products/', views.products_list, name='products_list'),
     
     path('feedbacks/<str:feedback_id>/', views.feedback_detail, name='feedback_detail'),
-    path('feedbacks/', views.feedbacks_list, name='feedbacks_list'),
+    # path('feedbacks/', views.feedbacks_list, name='feedbacks_list'),
 
     # Update (PATCH)
     path('customers/<str:customer_id>/update/', views.customer_update, name='customer_update'),
@@ -69,7 +69,7 @@ urlpatterns = [
 
     path('products/<str:product_id>/delete/', views.product_delete, name='product_delete'),
     path('products/bulk_delete/', views.bulk_delete_products, name='bulk_delete_products'),
-    
+
     path('feedbacks/<str:feedback_id>/delete/', views.feedback_delete, name='feedback_delete'),
     path('feedbacks/bulk_delete/', views.bulk_delete_feedbacks, name='bulk_delete_feedbacks'),
 
