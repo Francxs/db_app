@@ -121,5 +121,10 @@ class FeedbackSerializer(serializers.Serializer):
         if obj.product:
             return ProductSerializer(obj.product).data
         return None
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['customer_id'] = instance.customer.user_id
+        ret['product_id'] = instance.product.item_id
+        return ret
 
 
