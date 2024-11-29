@@ -172,6 +172,31 @@ def upload_products_from_txt(request):
     
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+# Views for calling various Feedbacks to ensure the data is being stored correctly    
+
+@api_view(['GET'])
+def customer_feedbacks(request, user_id):
+    """Get all feedbacks for a specific customer"""
+    try:
+        customer = Customer.objects.get(user_id=user_id)
+        feedbacks = customer.get_feedbacks()
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response(serializer.data)
+    except Customer.DoesNotExist:
+        return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def product_feedbacks(request, item_id):
+    """Get all feedbacks for a specific product"""
+    try:
+        product = Product.objects.get(item_id=item_id)
+        feedbacks = product.get_feedbacks()
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response(serializer.data)
+    except Product.DoesNotExist:
+        return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
 
 # PyMongo Views for Advanced Functionality
 

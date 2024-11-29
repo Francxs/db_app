@@ -55,3 +55,20 @@ class FeedbackSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.update(**validated_data)
         return instance.reload()
+    
+    customer = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+
+    def get_customer(self, obj):
+        try:
+            customer = Customer.objects.get(user_id=obj.customer_id)
+            return CustomerSerializer(customer).data
+        except:
+            return None
+
+    def get_product(self, obj):
+        try:
+            product = Product.objects.get(item_id=obj.product_id)
+            return ProductSerializer(product).data
+        except:
+            return None

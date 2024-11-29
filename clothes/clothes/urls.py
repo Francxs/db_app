@@ -39,6 +39,10 @@ urlpatterns = [
     path('upload/products/txt/', views.upload_products_from_txt, name='upload_products_txt'),
     path('upload/feedbacks/txt/', views.upload_feedbacks_from_txt, name='upload_feedbacks_txt'),
 
+    # New routes for customer and product feedbacks
+    path('customer/<int:user_id>/feedbacks/', views.customer_feedbacks, name='customer_feedbacks'),
+    path('product/<int:item_id>/feedbacks/', views.product_feedbacks, name='product_feedbacks'),
+
     # New URLs for added functionalities
     path('aggregation/customers/', views.customer_aggregation, name='customer_aggregation'),    # Aggregation query
     path('bulk-update/waist/', views.bulk_update_waist, name='bulk_update_waist'),              # Bulk update
