@@ -32,19 +32,25 @@ def feedback_list(request):
 # Create a new customer
 @api_view(['POST'])
 def customer_create(request):
-    serializer = CustomerSerializer(data=request.data)  # Deserialize the data
+    serializer = CustomerSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()  # Save the new customer
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            serializer.create(serializer.validated_data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Create a new product
 @api_view(['POST'])
 def product_create(request):
-    serializer = ProductSerializer(data=request.data)  # Deserialize the data
+    serializer = ProductSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()  # Save the new product
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            serializer.create(serializer.validated_data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -86,17 +92,59 @@ def bulk_upload_products(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # 3. Bulk Upload Feedbacks (PyMongo)
+# @api_view(['POST'])
+# def bulk_upload_feedbacks(request):
+#     """Bulk upload feedback using PyMongo."""
+#     db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+#     try:
+#         # Insert multiple feedback documents at once
+#         result = db_handle['feedback'].insert_many(request.data)
+#         return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
+#     except Exception as e:
+#         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 def bulk_upload_feedbacks(request):
-    """Bulk upload feedback using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+    """Bulk upload feedback using MongoEngine validation."""
     try:
-        # Insert multiple feedback documents at once
-        result = db_handle['feedback'].insert_many(request.data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
+        feedbacks_to_save = []
+        for feedback_data in request.data:
+            # Try to find the referenced customer and product
+            try:
+                customer = Customer.objects.get(user_id=feedback_data.get('customer_id'))
+                product = Product.objects.get(item_id=feedback_data.get('product_id'))
+                
+                # Create Feedback object with proper references
+                feedback = Feedback(
+                    review_id=feedback_data['review_id'],
+                    fit=feedback_data['fit'],
+                    length=feedback_data.get('length'),
+                    review_text=feedback_data.get('review_text'),
+                    review_summary=feedback_data.get('review_summary'),
+                    customer=customer,
+                    product=product
+                )
+                feedbacks_to_save.append(feedback)
+            except (Customer.DoesNotExist, Product.DoesNotExist):
+                # Optionally, you can skip or handle documents without valid references
+                print(f"Skipping feedback {feedback_data['review_id']} due to missing references")
+        
+        # Save all validated feedbacks
+        for feedback in feedbacks_to_save:
+            feedback.save()
+        
+        return Response({
+            "inserted_count": len(feedbacks_to_save),
+            "details": [f.review_id for f in feedbacks_to_save]
+        }, status=status.HTTP_201_CREATED)
+    
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
+
+
+############################################################################################################
 @api_view(['POST'])
 def upload_customers_from_txt(request):
     """Upload customers from a .txt file using PyMongo."""

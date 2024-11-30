@@ -4,17 +4,22 @@ from mongoengine import Document, StringField, IntField, ListField, DateField, R
 class Customer(Document):
     meta = {'collection': 'customers'}  # Explicitly specify the collection name
     user_id = IntField(required=True, unique=True)
-    user_name = StringField(max_length=100)
-    waist = StringField(max_length=10)
-    cup_size = StringField(max_length=5)
-    bra_size = StringField(max_length=10)
-    hips = StringField(max_length=10)
-    bust = StringField(max_length=10)
-    height = StringField(max_length=10)
+    user_name = StringField(required=True, max_length=100)
+    waist = StringField(required=True, max_length=10)
+    cup_size = StringField(required=True, max_length=5)
+    bra_size = StringField(required=True, max_length=10)
+    hips = StringField(required=True, max_length=10)
+    bust = StringField(required=True, max_length=10)
+    height = StringField(required=True, max_length=10)
 
     def clean(self):
         if not re.match(r'^\d{6}$', str(self.user_id)):
             raise ValidationError("User ID must be a 6-digit number")
+        
+        # Add validation for empty strings
+        for field in ['user_name', 'waist', 'cup_size', 'bra_size', 'hips', 'bust', 'height']:
+            if not getattr(self, field).strip():
+                raise ValidationError(f"{field} cannot be empty or just whitespace")
 
     def get_feedbacks(self):
         return Feedback.objects(customer_id=self.user_id)
@@ -22,16 +27,23 @@ class Customer(Document):
 class Product(Document):
     meta = {'collection': 'products'}  # Explicitly specify the collection name
     item_id = IntField(required=True, unique=True)
-    product_name = StringField(max_length=100)
-    size = IntField()
-    quality = IntField(min_value=1, max_value=5)
-    keywords = ListField(StringField(max_length=100))
-    cloth_size_category = StringField(max_length=10)
-    last_update_date = DateField()
+    product_name = StringField(required=True, max_length=100)
+    size = IntField(required=True, )
+    quality = IntField(required=True, min_value=1, max_value=5)
+    keywords = ListField(StringField(max_length=100), required=True)
+    cloth_size_category = StringField(required=True, max_length=10)
+    last_update_date = DateField(required=True)
 
     def clean(self):
         if not re.match(r'^\d{6}$', str(self.item_id)):
             raise ValidationError("Item ID must be a 6-digit number")
+        
+        # Add validation for empty fields
+        if not self.keywords:
+            raise ValidationError("Keywords list cannot be empty")
+        
+        if self.cloth_size_category not in ['S', 'M', 'L']:
+            raise ValidationError("Size category must be S, M, or L")
 
     def get_feedbacks(self):
         return Feedback.objects(product_id=self.item_id)

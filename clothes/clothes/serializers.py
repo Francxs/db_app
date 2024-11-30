@@ -5,18 +5,25 @@ from rest_framework.exceptions import ValidationError
 
 class CustomerSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
-    user_name = serializers.CharField(max_length=100, required=False)
-    waist = serializers.CharField(max_length=10, required=False)
-    cup_size = serializers.CharField(max_length=5, required=False)
-    bra_size = serializers.CharField(max_length=10, required=False)
-    hips = serializers.CharField(max_length=10, required=False)
-    bust = serializers.CharField(max_length=10, required=False)
-    height = serializers.CharField(max_length=10, required=False)
+    user_name = serializers.CharField(max_length=100, required=True)
+    waist = serializers.CharField(max_length=10, required=True)
+    cup_size = serializers.CharField(max_length=5, required=True)
+    bra_size = serializers.CharField(max_length=10, required=True)
+    hips = serializers.CharField(max_length=10, required=True)
+    bust = serializers.CharField(max_length=10, required=True)
+    height = serializers.CharField(max_length=10, required=True)
 
     def validate_user_id(self, value):
         if not re.match(r'^\d{6}$', str(value)):
             raise ValidationError("User ID must be a 6-digit number")
         return value
+    
+    def validate(self, data):
+        # Validate no empty strings or just whitespace
+        for field in ['user_name', 'waist', 'cup_size', 'bra_size', 'hips', 'bust', 'height']:
+            if not data.get(field, '').strip():
+                raise serializers.ValidationError({field: "This field cannot be empty or just whitespace"})
+        return data
 
     # Create a new Customer in MongoDB using MongoEngine
     def create(self, validated_data):
@@ -28,18 +35,38 @@ class CustomerSerializer(serializers.Serializer):
         return instance.reload()
 
 class ProductSerializer(serializers.Serializer):
-    item_id = serializers.IntegerField()
-    product_name = serializers.CharField(max_length=100)
-    size = serializers.IntegerField()
-    quality = serializers.IntegerField(min_value=1, max_value=5)
-    keywords = serializers.ListField(child=serializers.CharField(max_length=100))
-    cloth_size_category = serializers.CharField(max_length=10, required=False)
-    last_update_date = serializers.DateField()
+    item_id = serializers.IntegerField(required=True)
+    product_name = serializers.CharField(max_length=100, required=True)
+    size = serializers.IntegerField(required=True)
+    quality = serializers.IntegerField(min_value=1, max_value=5, required=True)
+    keywords = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        required=True,
+        allow_empty=False
+    )
+    cloth_size_category = serializers.CharField(max_length=10, required=True)
+    last_update_date = serializers.DateField(required=True)
 
     def validate_item_id(self, value):
         if not re.match(r'^\d{6}$', str(value)):
             raise ValidationError("Item ID must be a 6-digit number")
         return value
+    
+    def validate_cloth_size_category(self, value):
+        if value not in ['S', 'M', 'L']:
+            raise serializers.ValidationError("Size category must be S, M, or L")
+        return value
+
+    def validate_keywords(self, value):
+        if not value:
+            raise serializers.ValidationError("Keywords list cannot be empty")
+        if 'clothing' not in value:
+            raise serializers.ValidationError("Keywords must include 'clothing'")
+        return value
+
+    def validate(self, data):
+        # Add any cross-field validations here
+        return data
 
     # Create a new Product in MongoDB using MongoEngine
     def create(self, validated_data):
