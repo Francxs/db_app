@@ -123,8 +123,8 @@ class FeedbackSerializer(serializers.Serializer):
         return None
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        ret['customer_id'] = instance.customer.user_id
-        ret['product_id'] = instance.product.item_id
+        ret['customer_id'] = instance.customer.user_id if instance.customer else None
+        ret['product_id'] = instance.product.item_id if instance.product else None
         return ret
 
 

@@ -183,7 +183,7 @@ def upload_products_from_txt(request):
 @api_view(['GET'])
 def customer_detail(request, customer_id):
     try:
-        customer = Customer.objects.get(id=customer_id)
+        customer = Customer.objects.get(user_id=customer_id)
         serializer = CustomerSerializer(customer)
         return Response(serializer.data)
     except Customer.DoesNotExist:
@@ -208,6 +208,10 @@ def bulk_update_customers(request):
     db_handle, _ = get_db_handle()
     filter = request.data.get('filter')
     update = request.data.get('update')
+
+    if not filter or not update:
+        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         if '_id' in filter:
             filter['_id'] = ObjectId(filter['_id'])
@@ -215,6 +219,7 @@ def bulk_update_customers(request):
         return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
     except (ValidationError, bson.errors.InvalidId) as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def customer_delete(request, customer_id):
@@ -244,7 +249,7 @@ def bulk_delete_customers(request):
 @api_view(['GET'])
 def product_detail(request, product_id):
     try:
-        product = Product.objects.get(id=product_id)
+        product = Product.objects.get(item_id=product_id)
         serializer = ProductSerializer(product)
         return Response(serializer.data)
     except Product.DoesNotExist:
@@ -268,6 +273,10 @@ def bulk_update_products(request):
     db_handle, _ = get_db_handle()
     filter = request.data.get('filter')
     update = request.data.get('update')
+
+    if not filter or not update:
+        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         if '_id' in filter:
             filter['_id'] = ObjectId(filter['_id'])
@@ -302,13 +311,43 @@ def bulk_delete_products(request):
 
 @api_view(['GET'])
 def feedback_detail(request, feedback_id):
+    user_id = request.query_params.get('user_id')
+    item_id = request.query_params.get('item_id')
+
     try:
-        feedback = Feedback.objects.get(id=feedback_id)
+        feedback = Feedback.objects.get(review_id=feedback_id)
+
+        # Debugging statements
+        print(f"Feedback found: {feedback}")
+        if feedback.customer:
+            print(f"Feedback customer_id: {feedback.customer.user_id}")
+        else:
+            print("Feedback customer reference is None")
+
+        if feedback.product:
+            print(f"Feedback product_id: {feedback.product.item_id}")
+        else:
+            print("Feedback product reference is None")
+
+        # Ensure feedback.customer and feedback.product are not None
+        if feedback.customer is None or feedback.product is None:
+            return Response({"error": "Feedback has no associated customer or product"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Optionally filter by user_id and item_id if provided
+        if user_id and feedback.customer.user_id != int(user_id):
+            return Response({"error": "User ID does not match"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if item_id and feedback.product.item_id != int(item_id):
+            return Response({"error": "Item ID does not match"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = FeedbackSerializer(feedback)
         return Response(serializer.data)
     except Feedback.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
+        return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(f"Exception: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 @api_view(['PATCH'])
 def feedback_update(request, feedback_id):
     try:
@@ -327,13 +366,18 @@ def bulk_update_feedbacks(request):
     db_handle, _ = get_db_handle()
     filter = request.data.get('filter')
     update = request.data.get('update')
+
+    if not filter or not update:
+        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         if '_id' in filter:
             filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['feedbacks'].update_many(filter, {'$set': update})
+        result = db_handle['feedback'].update_many(filter, {'$set': update})
         return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
     except (ValidationError, bson.errors.InvalidId) as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 def feedback_delete(request, feedback_id):

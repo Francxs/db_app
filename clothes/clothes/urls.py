@@ -34,9 +34,9 @@ urlpatterns = [
     path('customers/', views.customer_list, name='customer_list'),
     path('products/', views.product_list, name='product_list'),
     path('feedbacks/', views.feedback_list, name='feedback_list'),
-    path('customers/<str:customer_id>/', views.customer_detail, name='customer_detail'),
-    path('products/<str:product_id>/', views.product_detail, name='product_detail'),
-    path('feedbacks/<str:feedback_id>/', views.feedback_detail, name='feedback_detail'),
+    path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
+    path('products/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('feedbacks/<int:feedback_id>/', views.feedback_detail, name='feedback_detail'),
     path('customer/<int:user_id>/feedbacks/', views.customer_feedbacks, name='customer_feedbacks'),
     path('product/<int:item_id>/feedbacks/', views.product_feedbacks, name='product_feedbacks'),
 
