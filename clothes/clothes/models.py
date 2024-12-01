@@ -2,6 +2,20 @@ import re
 from mongoengine import Document, StringField, IntField, ListField, DateField, ReferenceField, CASCADE, ValidationError, Q
 from datetime import date
 
+def validate_measurement(value):
+    """
+    Validates that the measurement is in the correct format.
+    """
+    if not re.match(r'^\d+(\.\d+)?$', value):
+        raise ValidationError(f"Invalid measurement format for '{value}'.")
+
+def validate_height(value):
+    """
+    Validates height format, e.g., 5'5.
+    """
+    if not re.match(r'^\d\'\d+$', value):
+        raise ValidationError(f"Invalid height format '{value}'. Expected format is like 5'5.")
+
 class Customer(Document):
     """
     Enhanced Customer model with robust validation and indexing.
@@ -17,33 +31,32 @@ class Customer(Document):
     
     user_id = IntField(required=True, unique=True, min_value=100000, max_value=999999)
     user_name = StringField(required=True, max_length=100, min_length=2)
-    waist = StringField(required=True, max_length=10, validation=r'^\d+(\.\d+)?[A-Za-z]?$')
+    waist = StringField(required=True, max_length=10, validation=validate_measurement)
     cup_size = StringField(required=True, max_length=5, choices=['AA', 'A', 'B', 'C', 'D', 'DD', 'E', 'F', 'G'])
-    bra_size = StringField(required=True, max_length=10, validation=r'^\d{2,3}[A-Z]$')
-    hips = StringField(required=True, max_length=10, validation=r'^\d+(\.\d+)?[A-Za-z]?$')
-    bust = StringField(required=True, max_length=10, validation=r'^\d+(\.\d+)?[A-Za-z]?$')
-    height = StringField(required=True, max_length=10, validation=r'^\d+(\.\d+)?[A-Za-z]?$')
+    bra_size = StringField(required=True, max_length=10, validation=validate_measurement)
+    hips = StringField(required=True, max_length=10, validation=validate_measurement)
+    bust = StringField(required=True, max_length=10, validation=validate_measurement)
+    height = StringField(required=True, max_length=10, validation=validate_height)
 
     def clean(self):
         """
         Comprehensive validation with specific business rules.
         """
-        # Advanced cross-field validations can be added here
         errors = []
         
-        # Example cross-field validation
+        # Validate waist vs hips measurement
         try:
-            waist_val = float(re.findall(r'\d+(\.\d+)?', self.waist)[0])
-            hips_val = float(re.findall(r'\d+(\.\d+)?', self.hips)[0])
-            
-            # Business rule: Waist should typically be less than hips
+            waist_val = float(self.waist)
+            hips_val = float(self.hips)
             if waist_val >= hips_val:
-                errors.append("Waist measurement seems inconsistent with hip measurement")
-        except (IndexError, ValueError):
-            errors.append("Invalid measurement format")
+                errors.append("Waist measurement must be less than hip measurement.")
+        except ValueError:
+            errors.append("Invalid measurement format for waist or hips.")
         
         if errors:
             raise ValidationError(errors)
+
+
 
 class Product(Document):
     """

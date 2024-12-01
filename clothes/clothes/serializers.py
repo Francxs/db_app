@@ -20,28 +20,43 @@ class CustomerSerializer(serializers.Serializer):
         """
         Additional serializer-level validation for waist measurement.
         """
-        if not re.match(r'^\d+(\.\d+)?[A-Za-z]?$', value):
-            raise ValidationError("Invalid waist measurement format")
+        if not re.match(r'^\d+(\.\d+)?$', value):
+            raise ValidationError("Invalid waist measurement format.")
         return value
+
+    def validate_height(self, value):
+        """
+        Validate height in the format like 5'5.
+        """
+        if not re.match(r'^\d\'\d+$', value):
+            raise ValidationError("Invalid height format. Expected format is 5'5.")
+        return value
+
+    def validate(self, data):
+        """
+        Cross-field validation for waist and hips.
+        """
+        waist = float(data['waist'])
+        hips = float(data['hips'])
+        if waist >= hips:
+            raise ValidationError("Waist measurement must be less than hip measurement.")
+        return data
 
     def create(self, validated_data):
         """
-        Custom create method with pre-save checks.
+        Create a new customer.
         """
-        customer = Customer(**validated_data)
-        customer.clean()  # Trigger model-level validation
-        customer.save()
-        return customer
+        return Customer(**validated_data).save()
 
     def update(self, instance, validated_data):
         """
-        Custom update method with pre-update checks.
+        Update an existing customer.
         """
         for key, value in validated_data.items():
             setattr(instance, key, value)
-        instance.clean()  # Trigger model-level validation
         instance.save()
         return instance
+
 
 class ProductSerializer(serializers.Serializer):
     """
@@ -79,47 +94,30 @@ class ProductSerializer(serializers.Serializer):
 
 class FeedbackSerializer(serializers.Serializer):
     """
-    Enhanced feedback data validation and transformation.
+    Feedback data validation and serialization.
     """
     review_id = serializers.IntegerField(min_value=100000, max_value=999999)
-    fit = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    length = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    fit = serializers.ChoiceField(choices=['Tight', 'Loose', 'Perfect'], required=False)
+    length = serializers.ChoiceField(choices=['Short', 'Regular', 'Long'], required=False)
     review_text = serializers.CharField(max_length=1000, required=False)
     review_summary = serializers.CharField(max_length=255, required=False)
-    customer_id = serializers.IntegerField()
-    product_id = serializers.IntegerField()
+    customer_id = serializers.IntegerField(source='customer.user_id')
+    product_id = serializers.IntegerField(source='product.item_id')
 
-    def validate(self, data):
+    def to_representation(self, instance):
         """
-        Cross-field validation for feedback.
+        Customize serialized output for better JSON compatibility.
         """
-        # Verify customer and product exist before creating feedback
-        try:
-            customer = Customer.objects.get(user_id=data['customer_id'])
-            product = Product.objects.get(item_id=data['product_id'])
-        except (Customer.DoesNotExist, Product.DoesNotExist):
-            raise ValidationError("Invalid customer or product reference")
-        
-        return data
+        representation = super().to_representation(instance)
+        return representation
 
     def create(self, validated_data):
         """
-        Custom create method with pre-save checks.
+        Create a new Feedback instance.
         """
-        customer = Customer.objects.get(user_id=validated_data['customer_id'])
-        product = Product.objects.get(item_id=validated_data['product_id'])
-        
-        feedback_data = {
-            'review_id': validated_data['review_id'],
-            'fit': validated_data.get('fit', ''),
-            'length': validated_data.get('length', ''),
-            'review_text': validated_data.get('review_text', ''),
-            'review_summary': validated_data.get('review_summary', ''),
-            'customer': customer,
-            'product': product
-        }
-        
-        feedback = Feedback(**feedback_data)
-        feedback.clean()  # Trigger model-level validation
+        validated_data['customer'] = Customer.objects.get(user_id=validated_data.pop('customer_id'))
+        validated_data['product'] = Product.objects.get(item_id=validated_data.pop('product_id'))
+        feedback = Feedback(**validated_data)
+        feedback.clean()
         feedback.save()
         return feedback
