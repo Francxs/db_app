@@ -10,24 +10,11 @@ from rest_framework.exceptions import ValidationError
 from bson import ObjectId, errors
 import bson
 
-# MongoEngine views for common operations
-@api_view(['GET'])
-def customer_list(request):
-    customers = Customer.objects.all()  # MongoEngine query to get all customers
-    serializer = CustomerSerializer(customers, many=True)
-    return Response(serializer.data)
 
-@api_view(['GET'])
-def product_list(request):
-    products = Product.objects.all()  # MongoEngine query to get all products
-    serializer = ProductSerializer(products, many=True)
-    return Response(serializer.data)
+#############
+# Create (POST)
+#############
 
-@api_view(['GET'])
-def feedback_list(request):
-    feedbacks = Feedback.objects.all()  # MongoEngine query to get all feedback
-    serializer = FeedbackSerializer(feedbacks, many=True)
-    return Response(serializer.data)
 
 # Create a new customer
 @api_view(['POST'])
@@ -52,7 +39,7 @@ def product_create(request):
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+# Create a new feedback
 @api_view(['POST'])
 def feedback_create(request):
     serializer = FeedbackSerializer(data=request.data)  # Deserialize the data
@@ -64,45 +51,51 @@ def feedback_create(request):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# PyMongo Views for Bulk Uploads
-
-# 1. Bulk Upload Customers (PyMongo)
+# 1. Bulk Upload Customers (MongoEngine)
 @api_view(['POST'])
 def bulk_upload_customers(request):
-    """Bulk upload customers using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+    """Bulk upload customers using MongoEngine."""
     try:
-        # Insert multiple customer documents at once
-        result = db_handle['customers'].insert_many(request.data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
+        customers_to_save = []
+        for customer_data in request.data:
+            serializer = CustomerSerializer(data=customer_data)
+            if serializer.is_valid():
+                customers_to_save.append(Customer(**serializer.validated_data))
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Save all validated customers
+        for customer in customers_to_save:
+            customer.save()
+        
+        return Response({"inserted_ids": [str(customer.user_id) for customer in customers_to_save]}, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# 2. Bulk Upload Products (PyMongo)
+
+# 2. Bulk Upload Products (MongoEngine)
 @api_view(['POST'])
 def bulk_upload_products(request):
-    """Bulk upload products using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+    """Bulk upload products using MongoEngine."""
     try:
-        # Insert multiple product documents at once
-        result = db_handle['products'].insert_many(request.data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
+        products_to_save = []
+        for product_data in request.data:
+            serializer = ProductSerializer(data=product_data)
+            if serializer.is_valid():
+                products_to_save.append(Product(**serializer.validated_data))
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Save all validated products
+        for product in products_to_save:
+            product.save()
+        
+        return Response({"inserted_ids": [str(product.item_id) for product in products_to_save]}, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. Bulk Upload Feedbacks (PyMongo)
-# @api_view(['POST'])
-# def bulk_upload_feedbacks(request):
-#     """Bulk upload feedback using PyMongo."""
-#     db_handle, _ = get_db_handle()  # Get the PyMongo database handle
-#     try:
-#         # Insert multiple feedback documents at once
-#         result = db_handle['feedback'].insert_many(request.data)
-#         return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
-#     except Exception as e:
-#         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+# 3. Bulk Upload Feedbacks (Mongoengine)
 @api_view(['POST'])
 def bulk_upload_feedbacks(request):
     """Bulk upload feedback using MongoEngine validation."""
@@ -142,100 +135,88 @@ def bulk_upload_feedbacks(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+#############
+# Read (GET)
+#############
 
 
-############################################################################################################
-@api_view(['POST'])
-def upload_customers_from_txt(request):
-    """Upload customers from a .txt file using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+@api_view(['GET'])
+def customer_list(request):
+    customers = Customer.objects.all()  # MongoEngine query to get all customers
+    serializer = CustomerSerializer(customers, many=True)
+    return Response(serializer.data)
 
-    # Check if the file is provided
-    if 'file' not in request.FILES:
-        return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET'])
+def product_list(request):
+    products = Product.objects.all()  # MongoEngine query to get all products
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
 
-    file = request.FILES['file']
-
-    # Check if the uploaded file is valid
-    if not isinstance(file, UploadedFile):
-        return Response({"error": "Invalid file format"}, status=status.HTTP_400_BAD_REQUEST)
-
+@api_view(['GET'])
+def feedback_list(request):
+    """
+    Retrieve a list of all feedbacks.
+    """
     try:
-        # Read and parse the .txt file content
-        file_content = file.read().decode('utf-8')
-        customer_data = [json.loads(line) for line in file_content.splitlines()]
-
-        # Insert multiple customer documents at once
-        result = db_handle['customers'].insert_many(customer_data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
-    
+        feedbacks = Feedback.objects.all()
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response(serializer.data)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-@api_view(['POST'])
-def upload_feedbacks_from_txt(request):
-    """Upload feedbacks from a .txt file using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # Check if the file is provided
-    if 'file' not in request.FILES:
-        return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-    file = request.FILES['file']
-
-    # Check if the uploaded file is valid
-    if not isinstance(file, UploadedFile):
-        return Response({"error": "Invalid file format"}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        # Read and parse the .txt file content
-        file_content = file.read().decode('utf-8')
-        customer_data = [json.loads(line) for line in file_content.splitlines()]
-
-        # Insert multiple customer documents at once
-        result = db_handle['customers'].insert_many(customer_data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
-    
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['POST'])
-def upload_products_from_txt(request):
-    """Upload products from a .txt file using PyMongo."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
-
-    # Check if the file is provided
-    if 'file' not in request.FILES:
-        return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-    file = request.FILES['file']
-
-    # Check if the uploaded file is valid
-    if not isinstance(file, UploadedFile):
-        return Response({"error": "Invalid file format"}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        # Read and parse the .txt file content
-        file_content = file.read().decode('utf-8')
-        customer_data = [json.loads(line) for line in file_content.splitlines()]
-
-        # Insert multiple customer documents at once
-        result = db_handle['customers'].insert_many(customer_data)
-        return Response({"inserted_ids": [str(i) for i in result.inserted_ids]}, status=status.HTTP_201_CREATED)
-    
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-# Customer
 
 @api_view(['GET'])
 def customer_detail(request, customer_id):
+    """
+    Retrieve details of a specific customer.
+    
+    Args:
+    - customer_id: ID of the customer to retrieve
+    
+    Returns:
+    - Customer details if found
+    - 404 Not Found if customer doesn't exist
+    """
     try:
         customer = Customer.objects.get(user_id=customer_id)
         serializer = CustomerSerializer(customer)
         return Response(serializer.data)
     except Customer.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def product_detail(request, product_id):
+    """
+    Retrieve details of a specific product.
+    
+    Args:
+    - product_id: ID of the product to retrieve
+    
+    Returns:
+    - Product details if found
+    - 404 Not Found if product doesn't exist
+    """
+    try:
+        product = Product.objects.get(item_id=product_id)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    except Product.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def feedback_detail(request, feedback_id):
+    """
+    Retrieve details of a specific feedback.
+    """
+    try:
+        feedback = Feedback.objects.get(review_id=feedback_id)
+        serializer = FeedbackSerializer(feedback)
+        return Response(serializer.data)
+    except Feedback.DoesNotExist:
+        return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['PATCH'])
 def customer_update(request, customer_id):
@@ -248,63 +229,132 @@ def customer_update(request, customer_id):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except (Customer.DoesNotExist, ValidationError, bson.errors.InvalidId):
         return Response({"error": "Invalid customer ID"}, status=status.HTTP_404_NOT_FOUND)
+
+# Views for calling various Feedbacks to ensure the data is being stored correctly 
+
+@api_view(['GET'])
+def customer_feedbacks(request, user_id):
+    """
+    Retrieve all feedback IDs for a specific customer.
     
-# Bulk Update
+    Args:
+    - user_id: ID of the customer
+    
+    Returns:
+    - List of customer's feedback review IDs
+    - 404 Not Found if customer doesn't exist
+    """
+    try:
+        customer = Customer.objects.get(user_id=user_id)
+        # Explicitly query for review IDs associated with this customer
+        feedbacks = Feedback.objects.filter(customer=customer)
+        # Extract just the review IDs
+        feedback_ids = [feedback.review_id for feedback in feedbacks]
+        return Response({"feedback_ids": feedback_ids})
+    except Customer.DoesNotExist:
+        return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def product_feedbacks(request, item_id):
+    """
+    Retrieve all feedback IDs for a specific product.
+    
+    Args:
+    - item_id: ID of the product
+    
+    Returns:
+    - List of product's feedback review IDs
+    - 404 Not Found if product doesn't exist
+    """
+    try:
+        product = Product.objects.get(item_id=item_id)
+        # Explicitly query for review IDs associated with this product
+        feedbacks = Feedback.objects.filter(product=product)
+        # Extract just the review IDs
+        feedback_ids = [feedback.review_id for feedback in feedbacks]
+        return Response({"feedback_ids": feedback_ids})
+    except Product.DoesNotExist:
+        return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+#############
+# Update (PATCH)
+#############
+
 
 @api_view(['PATCH'])
-def bulk_update_customers(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
-    update = request.data.get('update')
-
-    if not filter or not update:
-        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['customers'].update_many(filter, {'$set': update})
-        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['DELETE'])
-def customer_delete(request, customer_id):
+def customer_update(request, customer_id):
+    """
+    Update a specific customer's details.
+    
+    Args:
+    - customer_id: ID of the customer to update
+    
+    Returns:
+    - Updated customer details if successful
+    - 400 Bad Request if validation fails
+    - 404 Not Found if customer doesn't exist
+    """
     try:
         customer = Customer.objects.get(id=ObjectId(customer_id))
-        customer.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        serializer = CustomerSerializer(customer, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except (Customer.DoesNotExist, ValidationError, bson.errors.InvalidId):
         return Response({"error": "Invalid customer ID"}, status=status.HTTP_404_NOT_FOUND)
 
-# Bulk Delete
-@api_view(['DELETE'])
-def bulk_delete_customers(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
+@api_view(['PATCH'])
+def bulk_update_customers(request):
+    """
+    Bulk update customers matching specific filter criteria.
+    
+    Args:
+    - filter: Criteria to select customers
+    - update: Data to update matching customers
+    
+    Returns:
+    - Count of matched and modified customers
+    - 400 Bad Request if filter or update is missing
+    """
+    filter_data = request.data.get('filter', {})
+    update_data = request.data.get('update', {})
+
+    if not filter_data or not update_data:
+        return Response({"error": "Both 'filter' and 'update' fields are required"}, 
+                        status=status.HTTP_400_BAD_REQUEST)
+
     try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['customers'].delete_many(filter)
-        return Response({"deleted_count": result.deleted_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
+        # Get matched customers
+        matched_count = Customer.objects.filter(**filter_data).count()
+
+        if matched_count == 0:
+            return Response({"matched_count": 0, "modified_count": 0})
+
+        # Perform bulk update
+        modified_count = Customer.objects.filter(**filter_data).update(**update_data)
+
+        return Response({
+            "matched_count": matched_count,
+            "modified_count": modified_count
+        })
+    except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Product
-
-@api_view(['GET'])
-def product_detail(request, product_id):
-    try:
-        product = Product.objects.get(item_id=product_id)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
-    except Product.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['PATCH'])
 def product_update(request, product_id):
+    """
+    Update a specific product's details.
+    
+    Args:
+    - product_id: ID of the product to update
+    
+    Returns:
+    - Updated product details if successful
+    - 400 Bad Request if validation fails
+    - 404 Not Found if product doesn't exist
+    """
     try:
         product = Product.objects.get(id=ObjectId(product_id))
         serializer = ProductSerializer(product, data=request.data, partial=True)
@@ -315,206 +365,159 @@ def product_update(request, product_id):
     except (Product.DoesNotExist, ValidationError, bson.errors.InvalidId):
         return Response({"error": "Invalid product ID"}, status=status.HTTP_404_NOT_FOUND)
 
-# Bulk Update
 @api_view(['PATCH'])
 def bulk_update_products(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
-    update = request.data.get('update')
+    """
+    Bulk update products matching specific filter criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    update_data = request.data.get('update', {})
 
-    if not filter or not update:
-        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['products'].update_many(filter, {'$set': update})
-        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def product_delete(request, product_id):
-    try:
-        product = Product.objects.get(id=ObjectId(product_id))
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    except (Product.DoesNotExist, ValidationError, bson.errors.InvalidId):
-        return Response({"error": "Invalid product ID"}, status=status.HTTP_404_NOT_FOUND)
-    
-# Bulk Delete
-@api_view(['DELETE'])
-def bulk_delete_products(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
-    try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['products'].delete_many(filter)
-        return Response({"deleted_count": result.deleted_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-# Feedback
-
-@api_view(['GET'])
-def feedback_detail(request, feedback_id):
-    user_id = request.query_params.get('user_id')
-    item_id = request.query_params.get('item_id')
+    if not filter_data or not update_data:
+        return Response({"error": "Both 'filter' and 'update' fields are required"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        feedback = Feedback.objects.get(review_id=feedback_id)
+        # Count matched documents before updating
+        matched_count = Product.objects.filter(**filter_data).count()
 
-        # Debugging statements
-        print(f"Feedback found: {feedback}")
-        if feedback.customer:
-            print(f"Feedback customer_id: {feedback.customer.user_id}")
-        else:
-            print("Feedback customer reference is None")
+        if matched_count == 0:
+            return Response({"matched_count": 0, "modified_count": 0})
 
-        if feedback.product:
-            print(f"Feedback product_id: {feedback.product.item_id}")
-        else:
-            print("Feedback product reference is None")
+        # Perform bulk update
+        modified_count = Product.objects.filter(**filter_data).update(**update_data)
 
-        # Ensure feedback.customer and feedback.product are not None
-        if feedback.customer is None or feedback.product is None:
-            return Response({"error": "Feedback has no associated customer or product"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Optionally filter by user_id and item_id if provided
-        if user_id and feedback.customer.user_id != int(user_id):
-            return Response({"error": "User ID does not match"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if item_id and feedback.product.item_id != int(item_id):
-            return Response({"error": "Item ID does not match"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = FeedbackSerializer(feedback)
-        return Response(serializer.data)
-    except Feedback.DoesNotExist:
-        return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "matched_count": matched_count,
+            "modified_count": modified_count
+        })
     except Exception as e:
-        print(f"Exception: {e}")
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['PATCH'])
 def feedback_update(request, feedback_id):
+    """
+    Update a specific feedback's details.
+    """
     try:
-        feedback = Feedback.objects.get(id=ObjectId(feedback_id))
+        feedback = Feedback.objects.get(review_id=feedback_id)
         serializer = FeedbackSerializer(feedback, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except (Feedback.DoesNotExist, ValidationError, bson.errors.InvalidId):
-        return Response({"error": "Invalid feedback ID"}, status=status.HTTP_404_NOT_FOUND)
+    except Feedback.DoesNotExist:
+        return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# Bulk Update
 @api_view(['PATCH'])
 def bulk_update_feedbacks(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
-    update = request.data.get('update')
+    """
+    Bulk update feedback matching specific filter criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    update_data = request.data.get('update', {})
 
-    if not filter or not update:
-        return Response({"error": "Both 'filter' and 'update' fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+    if not filter_data or not update_data:
+        return Response({"error": "Both 'filter' and 'update' fields are required"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['feedback'].update_many(filter, {'$set': update})
-        return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
+        # Count matched documents before updating
+        matched_count = Feedback.objects.filter(**filter_data).count()
+
+        if matched_count == 0:
+            return Response({"matched_count": 0, "modified_count": 0})
+
+        # Perform bulk update
+        modified_count = Feedback.objects.filter(**filter_data).update(**update_data)
+
+        return Response({
+            "matched_count": matched_count,
+            "modified_count": modified_count
+        })
+    except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+#############
+# Update (PATCH)
+#############
+
+
+# DELETE: Customer Delete
 @api_view(['DELETE'])
-def feedback_delete(request, feedback_id):
+def customer_delete(request, customer_id):
+    """
+    Delete a specific customer by ID.
+    """
     try:
-        feedback = Feedback.objects.get(id=ObjectId(feedback_id))
-        feedback.delete()
+        customer = Customer.objects.get(user_id=customer_id)
+        customer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    except (Feedback.DoesNotExist, ValidationError, bson.errors.InvalidId):
-        return Response({"error": "Invalid feedback ID"}, status=status.HTTP_404_NOT_FOUND)
-
-# Bulk Delete
-@api_view(['DELETE'])
-def bulk_delete_feedbacks(request):
-    db_handle, _ = get_db_handle()
-    filter = request.data.get('filter')
-    try:
-        if '_id' in filter:
-            filter['_id'] = ObjectId(filter['_id'])
-        result = db_handle['feedbacks'].delete_many(filter)
-        return Response({"deleted_count": result.deleted_count})
-    except (ValidationError, bson.errors.InvalidId) as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Views for calling various Feedbacks to ensure the data is being stored correctly    
-
-@api_view(['GET'])
-def customer_feedbacks(request, user_id):
-    """Get all feedbacks for a specific customer"""
-    try:
-        customer = Customer.objects.get(user_id=user_id)
-        feedbacks = customer.get_feedbacks()
-        serializer = FeedbackSerializer(feedbacks, many=True)
-        return Response(serializer.data)
     except Customer.DoesNotExist:
         return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
 
-@api_view(['GET'])
-def product_feedbacks(request, item_id):
-    """Get all feedbacks for a specific product"""
+# DELETE: Bulk Delete Customers
+@api_view(['DELETE'])
+def bulk_delete_customers(request):
+    """
+    Bulk delete customers matching specific criteria.
+    """
+    filter_data = request.data.get('filter', {})
     try:
-        product = Product.objects.get(item_id=item_id)
-        feedbacks = product.get_feedbacks()
-        serializer = FeedbackSerializer(feedbacks, many=True)
-        return Response(serializer.data)
+        deleted_count = Customer.objects.filter(**filter_data).delete()
+        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# DELETE: Product Delete
+@api_view(['DELETE'])
+def product_delete(request, product_id):
+    """
+    Delete a specific product by ID.
+    """
+    try:
+        product = Product.objects.get(item_id=product_id)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     except Product.DoesNotExist:
         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
+# DELETE: Bulk Delete Products
+@api_view(['DELETE'])
+def bulk_delete_products(request):
+    """
+    Bulk delete products matching specific criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    try:
+        deleted_count = Product.objects.filter(**filter_data).delete()
+        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# PyMongo Views for Advanced Functionality
+# DELETE: Feedback Delete
+@api_view(['DELETE'])
+def feedback_delete(request, feedback_id):
+    """
+    Delete a specific feedback by ID.
+    """
+    try:
+        feedback = Feedback.objects.get(review_id=feedback_id)
+        feedback.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Feedback.DoesNotExist:
+        return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# 1. Aggregation Query: Aggregate customers by waist size
-@api_view(['GET'])
-def customer_aggregation(request):
-    """Aggregate customers by waist size."""
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
-    pipeline = [
-        {"$group": {"_id": "$waist", "total_customers": {"$sum": 1}}},
-        {"$sort": {"total_customers": -1}}  # Sort by the number of customers
-    ]
-    result = list(db_handle['customers'].aggregate(pipeline))
-    return Response(result)
-
-# 2. Bulk Update: Update multiple customers' waist sizes
-@api_view(['PATCH'])
-def bulk_update_waist(request):
-    """Bulk update customer waist sizes."""
-    old_waist = request.data.get('old_waist')
-    new_waist = request.data.get('new_waist')
-    if not old_waist or not new_waist:
-        return Response({"error": "Both 'old_waist' and 'new_waist' must be provided."},
-                        status=status.HTTP_400_BAD_REQUEST)
-    
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
-    result = db_handle['customers'].update_many(
-        {"waist": old_waist},  # Find customers with the old waist size
-        {"$set": {"waist": new_waist}}  # Update the waist size
-    )
-    return Response({"matched_count": result.matched_count, "modified_count": result.modified_count})
-
-# 3. Complex Filtering: Search for products by keyword
-@api_view(['GET'])
-def product_keyword_search(request):
-    """Search for products by a specific keyword."""
-    keyword = request.query_params.get('keyword', '')
-    if not keyword:
-        return Response({"error": "A 'keyword' query parameter must be provided."}, 
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    db_handle, _ = get_db_handle()  # Get the PyMongo database handle
-    result = list(db_handle['products'].find({"keywords": keyword}))
-    return Response(result)
+# DELETE: Bulk Delete Feedbacks
+@api_view(['DELETE'])
+def bulk_delete_feedbacks(request):
+    """
+    Bulk delete feedbacks matching specific criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    try:
+        deleted_count = Feedback.objects.filter(**filter_data).delete()
+        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
