@@ -20,9 +20,9 @@ from . import views
 
 urlpatterns = [
     # Create (POST)
-    path('customer/create/', views.customer_create, name='customer_create'),
-    path('product/create/', views.product_create, name='product_create'),
-    path('feedback/create/', views.feedback_create, name='feedback_create'),
+    path('customers/create/', views.customer_create, name='customer_create'),
+    path('products/create/', views.product_create, name='product_create'),
+    path('feedbacks/create/', views.feedback_create, name='feedback_create'),
     path('upload/customers/', views.bulk_upload_customers, name='bulk_upload_customers'),
     path('upload/products/', views.bulk_upload_products, name='bulk_upload_products'),
     path('upload/feedbacks/', views.bulk_upload_feedbacks, name='bulk_upload_feedbacks'),
@@ -35,8 +35,8 @@ urlpatterns = [
     path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
     path('products/<int:product_id>/', views.product_detail, name='product_detail'),
     path('feedbacks/<int:feedback_id>/', views.feedback_detail, name='feedback_detail'),
-    path('customer/<int:user_id>/feedbacks/', views.customer_feedbacks, name='customer_feedbacks'),
-    path('product/<int:item_id>/feedbacks/', views.product_feedbacks, name='product_feedbacks'),
+    path('customers/<int:user_id>/feedbacks/', views.customer_feedbacks, name='customer_feedbacks'),
+    path('products/<int:item_id>/feedbacks/', views.product_feedbacks, name='product_feedbacks'),
 
     # Update (PATCH)
     path('customers/<str:customer_id>/update/', views.customer_update, name='customer_update'),

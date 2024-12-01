@@ -457,19 +457,6 @@ def customer_delete(request, customer_id):
     except Customer.DoesNotExist:
         return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
 
-# DELETE: Bulk Delete Customers
-@api_view(['DELETE'])
-def bulk_delete_customers(request):
-    """
-    Bulk delete customers matching specific criteria.
-    """
-    filter_data = request.data.get('filter', {})
-    try:
-        deleted_count = Customer.objects.filter(**filter_data).delete()
-        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
-    except ValidationError as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 # DELETE: Product Delete
 @api_view(['DELETE'])
 def product_delete(request, product_id):
@@ -482,19 +469,6 @@ def product_delete(request, product_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
     except Product.DoesNotExist:
         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-
-# DELETE: Bulk Delete Products
-@api_view(['DELETE'])
-def bulk_delete_products(request):
-    """
-    Bulk delete products matching specific criteria.
-    """
-    filter_data = request.data.get('filter', {})
-    try:
-        deleted_count = Product.objects.filter(**filter_data).delete()
-        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
-    except ValidationError as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # DELETE: Feedback Delete
 @api_view(['DELETE'])
@@ -509,6 +483,34 @@ def feedback_delete(request, feedback_id):
     except Feedback.DoesNotExist:
         return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
 
+# DELETE: Bulk Delete Customers
+@api_view(['DELETE'])
+def bulk_delete_customers(request):
+    """
+    Bulk delete customers matching specific criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    try:
+        deleted_count_tuple = Customer.objects.filter(**filter_data).delete()
+        deleted_count = deleted_count_tuple[0] if isinstance(deleted_count_tuple, tuple) else deleted_count_tuple
+        return Response({"deleted_count": deleted_count}, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# DELETE: Bulk Delete Products
+@api_view(['DELETE'])
+def bulk_delete_products(request):
+    """
+    Bulk delete products matching specific criteria.
+    """
+    filter_data = request.data.get('filter', {})
+    try:
+        deleted_count_tuple = Product.objects.filter(**filter_data).delete()
+        deleted_count = deleted_count_tuple[0] if isinstance(deleted_count_tuple, tuple) else deleted_count_tuple
+        return Response({"deleted_count": deleted_count}, status=status.HTTP_200_OK)
+    except ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 # DELETE: Bulk Delete Feedbacks
 @api_view(['DELETE'])
 def bulk_delete_feedbacks(request):
@@ -517,7 +519,8 @@ def bulk_delete_feedbacks(request):
     """
     filter_data = request.data.get('filter', {})
     try:
-        deleted_count = Feedback.objects.filter(**filter_data).delete()
-        return Response({"deleted_count": deleted_count[0]}, status=status.HTTP_200_OK)
+        deleted_count_tuple = Feedback.objects.filter(**filter_data).delete()
+        deleted_count = deleted_count_tuple[0] if isinstance(deleted_count_tuple, tuple) else deleted_count_tuple
+        return Response({"deleted_count": deleted_count}, status=status.HTTP_200_OK)
     except ValidationError as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
