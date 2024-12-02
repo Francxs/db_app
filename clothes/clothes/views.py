@@ -235,17 +235,17 @@ def feedback_detail(request, feedback_id):
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['PATCH'])
-def customer_update(request, customer_id):
-    try:
-        customer = Customer.objects.get(id=ObjectId(customer_id))
-        serializer = CustomerSerializer(customer, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except (Customer.DoesNotExist, ValidationError, bson.errors.InvalidId):
-        return Response({"error": "Invalid customer ID"}, status=status.HTTP_404_NOT_FOUND)
+# @api_view(['PATCH'])
+# def customer_update(request, customer_id):
+#     try:
+#         customer = Customer.objects.get(id=ObjectId(customer_id))
+#         serializer = CustomerSerializer(customer, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     except (Customer.DoesNotExist, ValidationError, bson.errors.InvalidId):
+#         return Response({"error": "Invalid customer ID"}, status=status.HTTP_404_NOT_FOUND)
 
 # Views for calling various Feedbacks to ensure the data is being stored correctly 
 
