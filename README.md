@@ -6,9 +6,10 @@ source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
 pip install -r reqs.txt
 
---------------------------------
-proto_validation branch
 
+
+proto_validation branch
+--------------------------------
 Key Differences and Interactions:
 
 Model-Level Constraints:
@@ -32,4 +33,4 @@ Serializer validates incoming data
 If valid, it calls model's clean() method
 Model saves data to database
 Database enforces unique and type constraints
---------------------------------
+
