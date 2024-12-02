@@ -206,12 +206,29 @@ def product_detail(request, product_id):
 @api_view(['GET'])
 def feedback_detail(request, feedback_id):
     """
-    Retrieve details of a specific feedback.
+    Retrieve details of a specific feedback, including associated customer and product details.
     """
     try:
+        # Retrieve the feedback
         feedback = Feedback.objects.get(review_id=feedback_id)
+        
+        # Serialize the feedback
         serializer = FeedbackSerializer(feedback)
-        return Response(serializer.data)
+        
+        # Get the associated customer and product
+        customer = feedback.customer
+        product = feedback.product
+        
+        # Serialize customer and product details
+        customer_serializer = CustomerSerializer(customer)
+        product_serializer = ProductSerializer(product)
+        
+        # Create a response dictionary with all details
+        response_data = serializer.data
+        response_data['customer'] = customer_serializer.data
+        response_data['product'] = product_serializer.data
+        
+        return Response(response_data)
     except Feedback.DoesNotExist:
         return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
