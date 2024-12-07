@@ -1,0 +1,202 @@
+[
+    {
+        "user_id": 100001,
+        "user_name": "Alice",
+        "waist": "28",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "36",
+        "bust": "34",
+        "height": "5'5"
+    },
+    {
+        "user_id": 100002,
+        "user_name": "Bob",
+        "waist": "32",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "38",
+        "bust": "34",
+        "height": "5'9"
+    },
+    {
+        "user_id": 100003,
+        "user_name": "Charlie",
+        "waist": "30",
+        "cup_size": "C",
+        "bra_size": "36",
+        "hips": "40",
+        "bust": "36",
+        "height": "5'7"
+    },
+    {
+        "user_id": 100004,
+        "user_name": "David",
+        "waist": "34",
+        "cup_size": "B",
+        "bra_size": "36",
+        "hips": "42",
+        "bust": "36",
+        "height": "6'0"
+    },
+    {
+        "user_id": 100005,
+        "user_name": "Eve",
+        "waist": "26",
+        "cup_size": "A",
+        "bra_size": "32",
+        "hips": "34",
+        "bust": "32",
+        "height": "5'4"
+    },
+    {
+        "user_id": 100006,
+        "user_name": "Frank",
+        "waist": "33",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "39",
+        "bust": "34",
+        "height": "5'10"
+    },
+    {
+        "user_id": 100007,
+        "user_name": "Grace",
+        "waist": "29",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "37",
+        "bust": "34",
+        "height": "5'6"
+    },
+    {
+        "user_id": 100008,
+        "user_name": "Hank",
+        "waist": "31",
+        "cup_size": "C",
+        "bra_size": "36",
+        "hips": "41",
+        "bust": "36",
+        "height": "5'11"
+    },
+    {
+        "user_id": 100009,
+        "user_name": "Ivy",
+        "waist": "27",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "35",
+        "bust": "34",
+        "height": "5'5"
+    },
+    {
+        "user_id": 100010,
+        "user_name": "Jack",
+        "waist": "35",
+        "cup_size": "D",
+        "bra_size": "38",
+        "hips": "43",
+        "bust": "38",
+        "height": "6'1"
+    },
+    {
+        "user_id": 100011,
+        "user_name": "Kathy",
+        "waist": "28",
+        "cup_size": "C",
+        "bra_size": "36",
+        "hips": "36",
+        "bust": "36",
+        "height": "5'6"
+    },
+    {
+        "user_id": 100012,
+        "user_name": "Leo",
+        "waist": "32",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "38",
+        "bust": "34",
+        "height": "5'9"
+    },
+    {
+        "user_id": 100013,
+        "user_name": "Mona",
+        "waist": "30",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "40",
+        "bust": "34",
+        "height": "5'7"
+    },
+    {
+        "user_id": 100014,
+        "user_name": "Nate",
+        "waist": "34",
+        "cup_size": "C",
+        "bra_size": "36",
+        "hips": "42",
+        "bust": "36",
+        "height": "6'0"
+    },
+    {
+        "user_id": 100015,
+        "user_name": "Olivia",
+        "waist": "26",
+        "cup_size": "A",
+        "bra_size": "32",
+        "hips": "34",
+        "bust": "32",
+        "height": "5'4"
+    },
+    {
+        "user_id": 100016,
+        "user_name": "Paul",
+        "waist": "33",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "39",
+        "bust": "34",
+        "height": "5'10"
+    },
+    {
+        "user_id": 100017,
+        "user_name": "Quinn",
+        "waist": "29",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "37",
+        "bust": "34",
+        "height": "5'6"
+    },
+    {
+        "user_id": 100018,
+        "user_name": "Rita",
+        "waist": "31",
+        "cup_size": "C",
+        "bra_size": "36",
+        "hips": "41",
+        "bust": "36",
+        "height": "5'7"
+    },
+    {
+        "user_id": 100019,
+        "user_name": "Sam",
+        "waist": "27",
+        "cup_size": "B",
+        "bra_size": "34",
+        "hips": "35",
+        "bust": "34",
+        "height": "5'5"
+    },
+    {
+        "user_id": 100020,
+        "user_name": "Tina",
+        "waist": "35",
+        "cup_size": "D",
+        "bra_size": "38",
+        "hips": "43",
+        "bust": "38",
+        "height": "5'8"
+    }
+]
