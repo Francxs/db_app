@@ -1,0 +1,182 @@
+[
+    {
+        "review_id": 300001,
+        "fit": "Perfect",
+        "length": "Just right",
+        "review_text": "This product fits perfectly and is very comfortable.",
+        "review_summary": "Perfect fit!",
+        "customer_id": 100001,
+        "product_id": 200001
+    },
+    {
+        "review_id": 300002,
+        "fit": "Too small",
+        "length": "Too short",
+        "review_text": "The product is too small and the length is shorter than expected.",
+        "review_summary": "Too small and short",
+        "customer_id": 100002,
+        "product_id": 200002
+    },
+    {
+        "review_id": 300003,
+        "fit": "Too large",
+        "length": "Too long",
+        "review_text": "The product is too large and the length is longer than expected.",
+        "review_summary": "Too large and long",
+        "customer_id": 100003,
+        "product_id": 200003
+    },
+    {
+        "review_id": 300004,
+        "fit": "Good",
+        "length": "Just right",
+        "review_text": "The product fits well and the length is perfect.",
+        "review_summary": "Perfect fit",
+        "customer_id": 100003,
+        "product_id": 200003
+    },
+    {
+        "review_id": 300005,
+        "fit": "Average",
+        "length": "Slightly short",
+        "review_text": "The product is okay but the length is slightly shorter than expected.",
+        "review_summary": "Perfect fit",
+        "customer_id": 100004,
+        "product_id": 200004
+    },
+    {
+        "review_id": 300006,
+        "fit": "Perfect",
+        "length": "Just right",
+        "review_text": "Absolutely love this product! Fits perfectly and the length is spot on.",
+        "review_summary": "Love it!",
+        "customer_id": 100004,
+        "product_id": 200004
+    },
+    {
+        "review_id": 300007,
+        "fit": "Too tight",
+        "length": "Too short",
+        "review_text": "The product is too tight and shorter than I expected.",
+        "review_summary": "Too tight and short",
+        "customer_id": 100005,
+        "product_id": 200005
+    },
+    {
+        "review_id": 300008,
+        "fit": "Loose",
+        "length": "Too long",
+        "review_text": "The product is quite loose and the length is longer than I wanted.",
+        "review_summary": "Loose and long",
+        "customer_id": 100005,
+        "product_id": 200005
+    },
+    {
+        "review_id": 300009,
+        "fit": "Snug",
+        "length": "Just right",
+        "review_text": "Fits snugly and the length is perfect. Very comfortable.",
+        "review_summary": "Snug fit",
+        "customer_id": 100006,
+        "product_id": 200006
+    },
+    {
+        "review_id": 300010,
+        "fit": "Baggy",
+        "length": "Too long",
+        "review_text": "The product is baggy and the length is too long for my liking.",
+        "review_summary": "Baggy and long",
+        "customer_id": 100006,
+        "product_id": 200006
+    },
+    {
+        "review_id": 300011,
+        "fit": "Tight",
+        "length": "Just right",
+        "review_text": "The fit is tight but the length is just right.",
+        "review_summary": "Tight fit",
+        "customer_id": 100007,
+        "product_id": 200007
+    },
+    {
+        "review_id": 300012,
+        "fit": "Loose",
+        "length": "Just right",
+        "review_text": "The fit is a bit loose but the length is perfect.",
+        "review_summary": "Loose fit",
+        "customer_id": 100007,
+        "product_id": 200007
+    },
+    {
+        "review_id": 300013,
+        "fit": "Perfect",
+        "length": "Too short",
+        "review_text": "The fit is perfect but the length is a bit short.",
+        "review_summary": "Perfect fit, short length",
+        "customer_id": 100008,
+        "product_id": 200008
+    },
+    {
+        "review_id": 300014,
+        "fit": "Good",
+        "length": "Too long",
+        "review_text": "The fit is good but the length is too long.",
+        "review_summary": "Good fit, long length",
+        "customer_id": 100008,
+        "product_id": 200008
+    },
+    {
+        "review_id": 300015,
+        "fit": "Average",
+        "length": "Just right",
+        "review_text": "The fit is average but the length is just right.",
+        "review_summary": "Average fit",
+        "customer_id": 100008,
+        "product_id": 200008
+    },
+    {
+        "review_id": 300016,
+        "fit": "Perfect",
+        "length": "Perfect",
+        "review_text": "Couldn't ask for a better fit and length. Perfect in every way.",
+        "review_summary": "Absolutely perfect",
+        "customer_id": 100008,
+        "product_id": 200008
+    },
+    {
+        "review_id": 300017,
+        "fit": "Too loose",
+        "length": "Too short",
+        "review_text": "The product is too loose and the length is shorter than expected.",
+        "review_summary": "Loose and short",
+        "customer_id": 100009,
+        "product_id": 200009
+    },
+    {
+        "review_id": 300018,
+        "fit": "Tight",
+        "length": "Too long",
+        "review_text": "The fit is tight and the length is longer than I wanted.",
+        "review_summary": "Tight and long",
+        "customer_id": 100009,
+        "product_id": 200009
+    },
+    {
+        "review_id": 300019,
+        "fit": "Good",
+        "length": "Slightly long",
+        "review_text": "The fit is good but the length is slightly longer than expected.",
+        "review_summary": "Good fit, long length",
+        "customer_id": 100010,
+        "product_id": 200010
+    },
+    {
+        "review_id": 300020,
+        "fit": "Perfect",
+        "length": "Just right",
+        "review_text": "This product fits perfectly and the length is just right. Very happy with it.",
+        "review_summary": "Perfect fit and length",
+        "customer_id": 100010,
+        "product_id": 200010
+    }
+]

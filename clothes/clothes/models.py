@@ -1,71 +1,114 @@
 import re
-from mongoengine import Document, StringField, IntField, ListField, DateField, ReferenceField, CASCADE, ValidationError
+from mongoengine import Document, StringField, IntField, ListField, DateField, ReferenceField, CASCADE, ValidationError, Q
+from datetime import date
+
+def validate_measurement(value):
+    """
+    Validates that the measurement is in the correct format.
+    """
+    if not re.match(r'^\d+(\.\d+)?$', value):
+        raise ValidationError(f"Invalid measurement format for '{value}'.")
+
+def validate_height(value):
+    """
+    Validates height format, e.g., 5'5.
+    """
+    if not re.match(r'^\d\'\d+$', value):
+        raise ValidationError(f"Invalid height format '{value}'. Expected format is like 5'5.")
 
 class Customer(Document):
-    meta = {'collection': 'customers'}  # Explicitly specify the collection name
-    user_id = IntField(required=True, unique=True)
-    user_name = StringField(required=True, max_length=100)
-    waist = StringField(required=True, max_length=10)
-    cup_size = StringField(required=True, max_length=5)
-    bra_size = StringField(required=True, max_length=10)
-    hips = StringField(required=True, max_length=10)
-    bust = StringField(required=True, max_length=10)
-    height = StringField(required=True, max_length=10)
+    """
+    Enhanced Customer model with robust validation and indexing.
+    """
+    meta = {
+        'collection': 'customers',
+        'indexes': [
+            {'fields': ['user_id'], 'unique': True},
+            {'fields': ['user_name']},
+            {'fields': ['waist', 'hips', 'bust'], 'sparse': True}
+        ]
+    }
+    
+    user_id = IntField(required=True, unique=True, min_value=100000, max_value=999999)
+    user_name = StringField(required=True, max_length=100, min_length=2)
+    waist = StringField(required=True, max_length=10, validation=validate_measurement)
+    cup_size = StringField(required=True, max_length=5, choices=['AA', 'A', 'B', 'C', 'D', 'DD', 'E', 'F', 'G'])
+    bra_size = StringField(required=True, max_length=10, validation=validate_measurement)
+    hips = StringField(required=True, max_length=10, validation=validate_measurement)
+    bust = StringField(required=True, max_length=10, validation=validate_measurement)
+    height = StringField(required=True, max_length=10, validation=validate_height)
 
     def clean(self):
-        if not re.match(r'^\d{6}$', str(self.user_id)):
-            raise ValidationError("User ID must be a 6-digit number")
+        """
+        Comprehensive validation with specific business rules.
+        """
+        errors = []
         
-        # Add validation for empty strings
-        for field in ['user_name', 'waist', 'cup_size', 'bra_size', 'hips', 'bust', 'height']:
-            if not getattr(self, field).strip():
-                raise ValidationError(f"{field} cannot be empty or just whitespace")
+        # Validate waist vs hips measurement
+        try:
+            waist_val = float(self.waist)
+            hips_val = float(self.hips)
+            if waist_val >= hips_val:
+                errors.append("Waist measurement must be less than hip measurement.")
+        except ValueError:
+            errors.append("Invalid measurement format for waist or hips.")
+        
+        if errors:
+            raise ValidationError(errors)
 
-    def get_feedbacks(self):
-        return Feedback.objects(customer_id=self.user_id)
+
 
 class Product(Document):
-    meta = {'collection': 'products'}  # Explicitly specify the collection name
-    item_id = IntField(required=True, unique=True)
-    product_name = StringField(required=True, max_length=100)
-    size = IntField(required=True, )
+    """
+    Enhanced Product model with robust validation and indexing.
+    """
+    meta = {
+        'collection': 'products',
+        'indexes': [
+            {'fields': ['item_id'], 'unique': True},
+            {'fields': ['product_name'], 'sparse': True},
+            {'fields': ['keywords'], 'sparse': True}
+        ]
+    }
+    
+    item_id = IntField(required=True, unique=True, min_value=100000, max_value=999999)
+    product_name = StringField(required=True, max_length=100, min_length=2)
+    size = IntField(required=True, min_value=0, max_value=50)
     quality = IntField(required=True, min_value=1, max_value=5)
-    keywords = ListField(StringField(max_length=100), required=True)
-    cloth_size_category = StringField(required=True, max_length=10)
+    keywords = ListField(StringField(max_length=100), required=True, min_length=1)
+    cloth_size_category = StringField(required=True, choices=['XS', 'S', 'M', 'L', 'XL', 'XXL'])
     last_update_date = DateField(required=True)
 
     def clean(self):
-        if not re.match(r'^\d{6}$', str(self.item_id)):
-            raise ValidationError("Item ID must be a 6-digit number")
-        
-        # Add validation for empty fields
-        if not self.keywords:
-            raise ValidationError("Keywords list cannot be empty")
-        
-        if self.cloth_size_category not in ['S', 'M', 'L']:
-            raise ValidationError("Size category must be S, M, or L")
-
-    def get_feedbacks(self):
-        return Feedback.objects(product_id=self.item_id)
+        """
+        Comprehensive validation with specific business rules.
+        """
+        # Prevent future dates
+        if self.last_update_date > date.today():
+            raise ValidationError("Last update date cannot be in the future")
 
 class Feedback(Document):
-    meta = {'collection': 'feedback'}  # Explicitly specify the collection name
-    review_id = IntField(required=True, unique=True)
-    fit = StringField(max_length=10)
-    length = StringField(max_length=20)
-    review_text = StringField()
+    meta = {
+        'collection': 'feedback',
+        'indexes': [
+            {'fields': ['review_id'], 'unique': True},
+            {'fields': ['customer', 'product'], 'sparse': True}
+        ]
+    }
+    
+    review_id = IntField(required=True, unique=True, min_value=100000, max_value=999999)
+    fit = StringField(max_length=20)  # Removed choices
+    length = StringField(max_length=20)  # Removed choices
+    review_text = StringField(max_length=1000)
     review_summary = StringField(max_length=255)
-    customer_id = IntField()
-    product_id = IntField()
-
+    
     customer = ReferenceField(Customer, required=True, reverse_delete_rule=CASCADE)
     product = ReferenceField(Product, required=True, reverse_delete_rule=CASCADE)
 
-    # def clean(self):
-    #     if not Customer.objects(user_id=self.customer_id).first():
-    #         raise ValidationError("Referenced customer does not exist")
-    #     if not Product.objects(item_id=self.product_id).first():
-    #         raise ValidationError("Referenced product does not exist")
-    
     def clean(self):
-        pass  # Bypass model validation to avoid duplication with serializers
+        """
+        Comprehensive validation with specific business rules.
+        """
+        # Ensure referenced documents exist
+        if not self.customer or not self.product:
+            raise ValidationError("Both customer and product must exist")
